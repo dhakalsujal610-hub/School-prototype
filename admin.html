@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    html, body { height: 100%; width: 100%; }
+    body { background: linear-gradient(135deg, #1E3A5F 0%, #16324F 50%, #0F2C4D 100%); color: #FFFFFF; }
+
+    .dashboard-container { display: flex; height: 100%; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #1B3B5A 0%, #122C44 100%);
+      color: white;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100%;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-header {
+      padding: 25px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-header:hover { opacity: 0.9; }
+
+    .sidebar-logo { font-size: 32px; }
+    .sidebar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: #FFFFFF; }
+
+    .sidebar-nav { padding: 20px 0; }
+    .nav-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      color: #C9D8E5;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-item:hover { background: #2B5C88; color: #FFFFFF; }
+    .nav-item.active { background: #2B5C88; color: #2BB0ED; border-left: 3px solid #2BB0ED; padding-left: 17px; }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 260px;
+      right: 0;
+      height: 70px;
+      background: linear-gradient(135deg, #1B3B5A 0%, #122C44 100%);
+      border-bottom: 1px solid rgba(43, 176, 237, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      z-index: 500;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    }
+
+    .header-title { font-size: 20px; font-weight: 700; color: #FFFFFF; }
+    .header-right { display: flex; align-items: center; gap: 20px; }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: 1px solid rgba(43, 176, 237, 0.2);
+    }
+
+    .profile-section:hover { background: rgba(43, 176, 237, 0.1); }
+    .profile-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover { background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(43, 176, 237, 0.3); }
+
+    /* Main Content */
+    .main-wrapper { flex: 1; margin-left: 260px; margin-top: 70px; }
+    .main-content { padding: 30px; overflow-y: auto; height: calc(100% - 70px); }
+
+    /* Dashboard Grid */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: rgba(28, 63, 99, 0.6);
+      backdrop-filter: blur(10px);
+      padding: 25px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    .stat-box:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(43, 176, 237, 0.2); background: rgba(28, 63, 99, 0.8); }
+    .stat-number { font-size: 32px; font-weight: 700; color: #38C6F4; }
+    .stat-label { font-size: 13px; color: #94AFC3; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Table Styles */
+    .table-container {
+      background: rgba(28, 63, 99, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .table-header { background: rgba(0, 0, 0, 0.2); padding: 20px; border-bottom: 1px solid rgba(43, 176, 237, 0.2); display: flex; justify-content: space-between; align-items: center; }
+    .table-title { font-size: 18px; font-weight: 700; color: #FFFFFF; }
+
+    .add-btn {
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .add-btn:hover { background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(43, 176, 237, 0.3); }
+
+    .table-content { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(0, 0, 0, 0.1); padding: 15px 20px; text-align: left; font-weight: 600; color: #C9D8E5; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(43, 176, 237, 0.15); }
+    td { padding: 15px 20px; border-bottom: 1px solid rgba(43, 176, 237, 0.1); color: #C9D8E5; }
+    tr:hover { background: rgba(43, 176, 237, 0.05); }
+
+    .action-buttons { display: flex; gap: 8px; }
+    .edit-btn, .delete-btn { padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease; }
+    .edit-btn { background: rgba(43, 176, 237, 0.2); color: #2BB0ED; }
+    .edit-btn:hover { background: rgba(43, 176, 237, 0.3); }
+    .delete-btn { background: rgba(34, 197, 94, 0.2); color: #22C55E; }
+    .delete-btn:hover { background: rgba(34, 197, 94, 0.3); }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1E3A5F 0%, #16324F 100%);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.3s ease;
+      border: 1px solid rgba(43, 176, 237, 0.2);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #FFFFFF; }
+    .modal-body { margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #C9D8E5; font-size: 14px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid rgba(43, 176, 237, 0.3); border-radius: 8px; font-size: 14px; background: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+    .form-group input::placeholder { color: #94AFC3; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #2BB0ED; box-shadow: 0 0 0 3px rgba(43, 176, 237, 0.2); }
+
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-footer button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+    .cancel-btn { background: rgba(255, 255, 255, 0.1); color: #C9D8E5; }
+    .cancel-btn:hover { background: rgba(255, 255, 255, 0.15); }
+    .save-btn { background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%); color: white; }
+    .save-btn:hover { background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%); }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 20px; color: #94AFC3; }
+    .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 70px; }
+      .sidebar-title, .nav-item span { display: none; }
+      .header { left: 70px; }
+      .main-wrapper { margin-left: 70px; }
+      .stat-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Loading state */
+    .loading { opacity: 0.6; pointer-events: none; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body>
+  <div class="dashboard-container">
+   <!-- Sidebar -->
+   <div class="sidebar">
+    <div class="sidebar-header" onclick="setCurrentView('dashboard')">
+     <div class="sidebar-logo">
+      📚
+     </div>
+     <div class="sidebar-title" id="school-title">
+      School Admin
+     </div>
+    </div>
+    <div class="sidebar-nav">
+     <div class="nav-item active" onclick="setCurrentView('dashboard')"><span style="font-size: 18px;">📊</span> <span>Dashboard</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('teachers')"><span style="font-size: 18px;">👨‍🏫</span> <span>Teachers</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('students')"><span style="font-size: 18px;">👨‍🎓</span> <span>Students</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('parents')"><span style="font-size: 18px;">👨‍👩‍👧</span> <span>Parents</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('classes')"><span style="font-size: 18px;">📖</span> <span>Classes</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('subjects')"><span style="font-size: 18px;">📝</span> <span>Subjects</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('attendance')"><span style="font-size: 18px;">✓</span> <span>Attendance</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('fees')"><span style="font-size: 18px;">💰</span> <span>Fees</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('notices')"><span style="font-size: 18px;">📌</span> <span>Notices</span>
+     </div>
+    </div>
+   </div><!-- Main Content -->
+   <div class="main-wrapper">
+    <!-- Header -->
+    <div class="header">
+     <div class="header-title" id="page-title">
+      Dashboard
+     </div>
+     <div class="header-right">
+      <div class="profile-section">
+       <div class="profile-avatar" id="admin-initial">
+        J
+       </div>
+       <div id="admin-display">
+        John Admin
+       </div>
+      </div><button class="logout-btn" onclick="logout()">Logout</button>
+     </div>
+    </div><!-- Content Area -->
+    <div class="main-content">
+     <!-- Dashboard View -->
+     <div id="dashboard-view" class="view-content">
+      <div class="stat-grid">
+       <div class="stat-box">
+        <div class="stat-number" id="total-students">
+         0
+        </div>
+        <div class="stat-label">
+         Total Students
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-number" id="total-teachers">
+         0
+        </div>
+        <div class="stat-label">
+         Total Teachers
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-number" id="total-classes">
+         0
+        </div>
+        <div class="stat-label">
+         Total Classes
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-number" id="total-fees">
+         0
+        </div>
+        <div class="stat-label">
+         Fees Collected
+        </div>
+       </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+       <div class="table-container">
+        <div class="table-header">
+         <div class="table-title">
+          Recent Activities
+         </div>
+        </div>
+        <div class="table-content">
+         <table>
+          <thead>
+           <tr>
+            <th>Action</th>
+            <th>Type</th>
+            <th>Date</th>
+           </tr>
+          </thead>
+          <tbody id="recent-activities">
+           <tr>
+            <td colspan="3" style="text-align: center; color: #9ca3af; padding: 30px;">No activities yet</td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </div>
+       <div class="table-container">
+        <div class="table-header">
+         <div class="table-title">
+          Announcements
+         </div>
+        </div>
+        <div class="table-content">
+         <div id="announcements-list" style="padding: 20px;">
+          <p style="text-align: center; color: #9ca3af;">No announcements</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Teachers View -->
+     <div id="teachers-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Manage Teachers
+        </div><button class="add-btn" onclick="openAddModal('teacher')">+ Add Teacher</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Name</th>
+           <th>Email</th>
+           <th>Subject</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="teachers-table">
+          <tr>
+           <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No teachers added</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Students View -->
+     <div id="students-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Manage Students
+        </div><button class="add-btn" onclick="openAddModal('student')">+ Add Student</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Name</th>
+           <th>Email</th>
+           <th>Class</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="students-table">
+          <tr>
+           <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No students added</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Parents View -->
+     <div id="parents-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Manage Parents
+        </div><button class="add-btn" onclick="openAddModal('parent')">+ Add Parent</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Name</th>
+           <th>Email</th>
+           <th>Phone</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="parents-table">
+          <tr>
+           <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No parents added</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Classes View -->
+     <div id="classes-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Manage Classes
+        </div><button class="add-btn" onclick="openAddModal('class')">+ Add Class</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Class Name</th>
+           <th>Section</th>
+           <th>Total Students</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="classes-table">
+          <tr>
+           <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No classes added</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Subjects View -->
+     <div id="subjects-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Manage Subjects
+        </div><button class="add-btn" onclick="openAddModal('subject')">+ Add Subject</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Subject Name</th>
+           <th>Code</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="subjects-table">
+          <tr>
+           <td colspan="4" style="text-align: center; color: #9ca3af; padding: 30px;">No subjects added</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Attendance View -->
+     <div id="attendance-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Attendance Overview
+        </div>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Student Name</th>
+           <th>Date</th>
+           <th>Status</th>
+           <th>Remarks</th>
+          </tr>
+         </thead>
+         <tbody id="attendance-table">
+          <tr>
+           <td colspan="4" style="text-align: center; color: #9ca3af; padding: 30px;">No attendance records</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Fees View -->
+     <div id="fees-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Fee Management
+        </div><button class="add-btn" onclick="openAddModal('fee')">+ Add Fee Record</button>
+       </div>
+       <div class="table-content">
+        <table>
+         <thead>
+          <tr>
+           <th>Student</th>
+           <th>Amount</th>
+           <th>Month</th>
+           <th>Status</th>
+           <th>Actions</th>
+          </tr>
+         </thead>
+         <tbody id="fees-table">
+          <tr>
+           <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No fee records</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Notices View -->
+     <div id="notices-view" class="view-content" style="display: none;">
+      <div class="table-container">
+       <div class="table-header">
+        <div class="table-title">
+         Notice Board Management
+        </div><button class="add-btn" onclick="openAddModal('notice')">+ Post Notice</button>
+       </div>
+       <div class="table-content">
+        <div id="notices-list" style="padding: 20px; max-height: 500px; overflow-y: auto;">
+         <p style="text-align: center; color: #9ca3af;">No notices posted</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Add/Edit Modal -->
+  <div id="modal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header" id="modal-title">
+     Add Teacher
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+     <button class="cancel-btn" onclick="closeModal()">Cancel</button> <button class="save-btn" onclick="saveRecord()" id="save-btn">Save</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      school_title: 'School Management System',
+      admin_name: 'John Administrator'
+    };
+
+    let config = { ...defaultConfig };
+    let currentView = 'dashboard';
+    let currentEditingId = null;
+    let currentEditingType = null;
+    let allData = { teachers: [], students: [], parents: [], classes: [], subjects: [], attendance: [], fees: [], notices: [] };
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = newConfig;
+          document.getElementById('school-title').textContent = config.school_title || defaultConfig.school_title;
+          const adminName = config.admin_name || defaultConfig.admin_name;
+          document.getElementById('admin-display').textContent = adminName;
+          document.getElementById('admin-initial').textContent = adminName.charAt(0);
+        },
+        mapToCapabilities: () => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+        mapToEditPanelValues: () => new Map([
+          ['school_title', config.school_title || defaultConfig.school_title],
+          ['admin_name', config.admin_name || defaultConfig.admin_name]
+        ])
+      });
+    }
+
+    // Initialize Data SDK
+    let dataInitialized = false;
+    async function initializeDataSdk() {
+      if (dataInitialized || !window.dataSdk) return;
+      const result = await window.dataSdk.init({
+        onDataChanged: (data) => {
+          data.forEach(record => {
+            const type = record.type;
+            if (type === 'teacher') {
+              const idx = allData.teachers.findIndex(t => t.__backendId === record.__backendId);
+              if (idx >= 0) allData.teachers[idx] = record;
+              else allData.teachers.push(record);
+            } else if (type === 'student') {
+              const idx = allData.students.findIndex(s => s.__backendId === record.__backendId);
+              if (idx >= 0) allData.students[idx] = record;
+              else allData.students.push(record);
+            } else if (type === 'parent') {
+              const idx = allData.parents.findIndex(p => p.__backendId === record.__backendId);
+              if (idx >= 0) allData.parents[idx] = record;
+              else allData.parents.push(record);
+            } else if (type === 'class') {
+              const idx = allData.classes.findIndex(c => c.__backendId === record.__backendId);
+              if (idx >= 0) allData.classes[idx] = record;
+              else allData.classes.push(record);
+            } else if (type === 'subject') {
+              const idx = allData.subjects.findIndex(s => s.__backendId === record.__backendId);
+              if (idx >= 0) allData.subjects[idx] = record;
+              else allData.subjects.push(record);
+            } else if (type === 'fee') {
+              const idx = allData.fees.findIndex(f => f.__backendId === record.__backendId);
+              if (idx >= 0) allData.fees[idx] = record;
+              else allData.fees.push(record);
+            } else if (type === 'notice') {
+              const idx = allData.notices.findIndex(n => n.__backendId === record.__backendId);
+              if (idx >= 0) allData.notices[idx] = record;
+              else allData.notices.push(record);
+            }
+          });
+          updateAllDisplays();
+        }
+      });
+      if (result.isOk) dataInitialized = true;
+    }
+
+    initializeDataSdk();
+
+    function updateAllDisplays() {
+      updateTeachersTable();
+      updateStudentsTable();
+      updateParentsTable();
+      updateClassesTable();
+      updateSubjectsTable();
+      updateFeesTable();
+      updateNoticesList();
+      updateDashboard();
+    }
+
+    function setCurrentView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-content').forEach(el => el.style.display = 'none');
+      document.getElementById(view + '-view').style.display = 'block';
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.target.closest('.nav-item').classList.add('active');
+
+      const titles = {
+        dashboard: '📊 Dashboard',
+        teachers: '👨‍🏫 Teachers',
+        students: '👨‍🎓 Students',
+        parents: '👨‍👩‍👧 Parents',
+        classes: '📖 Classes',
+        subjects: '📝 Subjects',
+        attendance: '✓ Attendance',
+        fees: '💰 Fees',
+        notices: '📌 Notices'
+      };
+      document.getElementById('page-title').textContent = titles[view] || view;
+    }
+
+    function updateDashboard() {
+      document.getElementById('total-students').textContent = allData.students.length;
+      document.getElementById('total-teachers').textContent = allData.teachers.length;
+      document.getElementById('total-classes').textContent = allData.classes.length;
+      const totalFees = allData.fees.reduce((sum, f) => sum + (parseFloat(f.amount) || 0), 0);
+      document.getElementById('total-fees').textContent = '$' + totalFees.toLocaleString();
+    }
+
+    function updateTeachersTable() {
+      const tbody = document.getElementById('teachers-table');
+      if (allData.teachers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No teachers added</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.teachers.forEach(teacher => {
+        const id = teacher.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-name]').textContent = teacher.name;
+          row.querySelector('[data-email]').textContent = teacher.email;
+          row.querySelector('[data-subject]').textContent = teacher.subject;
+          row.querySelector('[data-status]').textContent = teacher.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-name>${teacher.name}</td><td data-email>${teacher.email}</td><td data-subject>${teacher.subject}</td><td data-status>${teacher.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('teacher', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('teacher', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateStudentsTable() {
+      const tbody = document.getElementById('students-table');
+      if (allData.students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No students added</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.students.forEach(student => {
+        const id = student.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-name]').textContent = student.name;
+          row.querySelector('[data-email]').textContent = student.email;
+          row.querySelector('[data-class]').textContent = student.classSection;
+          row.querySelector('[data-status]').textContent = student.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-name>${student.name}</td><td data-email>${student.email}</td><td data-class>${student.classSection}</td><td data-status>${student.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('student', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('student', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateParentsTable() {
+      const tbody = document.getElementById('parents-table');
+      if (allData.parents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No parents added</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.parents.forEach(parent => {
+        const id = parent.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-name]').textContent = parent.name;
+          row.querySelector('[data-email]').textContent = parent.email;
+          row.querySelector('[data-phone]').textContent = parent.phone;
+          row.querySelector('[data-status]').textContent = parent.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-name>${parent.name}</td><td data-email>${parent.email}</td><td data-phone>${parent.phone}</td><td data-status>${parent.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('parent', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('parent', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateClassesTable() {
+      const tbody = document.getElementById('classes-table');
+      if (allData.classes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No classes added</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.classes.forEach(cls => {
+        const id = cls.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-name]').textContent = cls.name;
+          row.querySelector('[data-section]').textContent = cls.classSection;
+          row.querySelector('[data-count]').textContent = '0';
+          row.querySelector('[data-status]').textContent = cls.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-name>${cls.name}</td><td data-section>${cls.classSection}</td><td data-count>0</td><td data-status>${cls.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('class', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('class', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateSubjectsTable() {
+      const tbody = document.getElementById('subjects-table');
+      if (allData.subjects.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9ca3af; padding: 30px;">No subjects added</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.subjects.forEach(subject => {
+        const id = subject.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-name]').textContent = subject.name;
+          row.querySelector('[data-subject]').textContent = subject.subject;
+          row.querySelector('[data-status]').textContent = subject.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-name>${subject.name}</td><td data-subject>${subject.subject}</td><td data-status>${subject.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('subject', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('subject', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateFeesTable() {
+      const tbody = document.getElementById('fees-table');
+      if (allData.fees.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">No fee records</td></tr>';
+        return;
+      }
+      const existingMap = new Map([...tbody.querySelectorAll('tr[data-id]')].map(el => [el.dataset.id, el]));
+      allData.fees.forEach(fee => {
+        const id = fee.__backendId;
+        if (existingMap.has(id)) {
+          const row = existingMap.get(id);
+          row.querySelector('[data-student]').textContent = fee.name;
+          row.querySelector('[data-amount]').textContent = '$' + fee.amount;
+          row.querySelector('[data-month]').textContent = fee.classSection;
+          row.querySelector('[data-status]').textContent = fee.status;
+          existingMap.delete(id);
+        } else {
+          const row = document.createElement('tr');
+          row.dataset.id = id;
+          row.innerHTML = `<td data-student>${fee.name}</td><td data-amount>$${fee.amount}</td><td data-month>${fee.classSection}</td><td data-status>${fee.status}</td><td><div class="action-buttons"><button class="edit-btn" onclick="editRecord('fee', '${id}')">Edit</button><button class="delete-btn" onclick="confirmDelete('fee', '${id}')">Delete</button></div></td>`;
+          tbody.appendChild(row);
+        }
+      });
+      existingMap.forEach(row => row.remove());
+    }
+
+    function updateNoticesList() {
+      const container = document.getElementById('notices-list');
+      if (allData.notices.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #9ca3af;">No notices posted</p>';
+        return;
+      }
+      container.innerHTML = allData.notices.map(notice => `
+        <div style="padding: 15px; background: #f9fafb; border-left: 4px solid #3b82f6; margin-bottom: 10px; border-radius: 4px;">
+          <div style="font-weight: 600; color: #1f2937;">${notice.name}</div>
+          <div style="font-size: 13px; color: #6b7280; margin-top: 5px;">${notice.subject || ''}</div>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="edit-btn" onclick="editRecord('notice', '${notice.__backendId}')">Edit</button>
+            <button class="delete-btn" onclick="confirmDelete('notice', '${notice.__backendId}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openAddModal(type) {
+      currentEditingId = null;
+      currentEditingType = type;
+      document.getElementById('modal-title').textContent = 'Add ' + type.charAt(0).toUpperCase() + type.slice(1);
+      
+      const forms = {
+        teacher: '<div class="form-group"><label>Name</label><input type="text" id="name" placeholder="Enter name"></div><div class="form-group"><label>Email</label><input type="email" id="email" placeholder="Enter email"></div><div class="form-group"><label>Subject</label><input type="text" id="subject" placeholder="Enter subject"></div><div class="form-group"><label>Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>',
+        student: '<div class="form-group"><label>Name</label><input type="text" id="name" placeholder="Enter name"></div><div class="form-group"><label>Email</label><input type="email" id="email" placeholder="Enter email"></div><div class="form-group"><label>Class</label><input type="text" id="classSection" placeholder="Enter class"></div><div class="form-group"><label>Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>',
+        parent: '<div class="form-group"><label>Name</label><input type="text" id="name" placeholder="Enter name"></div><div class="form-group"><label>Email</label><input type="email" id="email" placeholder="Enter email"></div><div class="form-group"><label>Phone</label><input type="text" id="phone" placeholder="Enter phone"></div><div class="form-group"><label>Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>',
+        class: '<div class="form-group"><label>Class Name</label><input type="text" id="name" placeholder="Enter class name"></div><div class="form-group"><label>Section</label><input type="text" id="classSection" placeholder="Enter section"></div><div class="form-group"><label>Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>',
+        subject: '<div class="form-group"><label>Subject Name</label><input type="text" id="name" placeholder="Enter subject name"></div><div class="form-group"><label>Code</label><input type="text" id="subject" placeholder="Enter code"></div><div class="form-group"><label>Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>',
+        fee: '<div class="form-group"><label>Student Name</label><input type="text" id="name" placeholder="Enter student name"></div><div class="form-group"><label>Amount</label><input type="number" id="amount" placeholder="Enter amount"></div><div class="form-group"><label>Month</label><input type="text" id="classSection" placeholder="Enter month"></div><div class="form-group"><label>Status</label><select id="status"><option>Paid</option><option>Pending</option></select></div>',
+        notice: '<div class="form-group"><label>Title</label><input type="text" id="name" placeholder="Enter notice title"></div><div class="form-group"><label>Description</label><input type="text" id="subject" placeholder="Enter description"></div>'
+      };
+      
+      document.getElementById('modal-body').innerHTML = forms[type] || '';
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function editRecord(type, id) {
+      currentEditingId = id;
+      currentEditingType = type;
+      
+      let data = null;
+      if (type === 'teacher') data = allData.teachers.find(t => t.__backendId === id);
+      else if (type === 'student') data = allData.students.find(s => s.__backendId === id);
+      else if (type === 'parent') data = allData.parents.find(p => p.__backendId === id);
+      else if (type === 'class') data = allData.classes.find(c => c.__backendId === id);
+      else if (type === 'subject') data = allData.subjects.find(s => s.__backendId === id);
+      else if (type === 'fee') data = allData.fees.find(f => f.__backendId === id);
+      else if (type === 'notice') data = allData.notices.find(n => n.__backendId === id);
+      
+      if (!data) return;
+      
+      document.getElementById('modal-title').textContent = 'Edit ' + type.charAt(0).toUpperCase() + type.slice(1);
+      
+      const forms = {
+        teacher: `<div class="form-group"><label>Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Email</label><input type="email" id="email" value="${data.email}"></div><div class="form-group"><label>Subject</label><input type="text" id="subject" value="${data.subject}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Active' ? 'selected' : ''}>Active</option><option ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>`,
+        student: `<div class="form-group"><label>Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Email</label><input type="email" id="email" value="${data.email}"></div><div class="form-group"><label>Class</label><input type="text" id="classSection" value="${data.classSection}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Active' ? 'selected' : ''}>Active</option><option ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>`,
+        parent: `<div class="form-group"><label>Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Email</label><input type="email" id="email" value="${data.email}"></div><div class="form-group"><label>Phone</label><input type="text" id="phone" value="${data.phone}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Active' ? 'selected' : ''}>Active</option><option ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>`,
+        class: `<div class="form-group"><label>Class Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Section</label><input type="text" id="classSection" value="${data.classSection}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Active' ? 'selected' : ''}>Active</option><option ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>`,
+        subject: `<div class="form-group"><label>Subject Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Code</label><input type="text" id="subject" value="${data.subject}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Active' ? 'selected' : ''}>Active</option><option ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>`,
+        fee: `<div class="form-group"><label>Student Name</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Amount</label><input type="number" id="amount" value="${data.amount}"></div><div class="form-group"><label>Month</label><input type="text" id="classSection" value="${data.classSection}"></div><div class="form-group"><label>Status</label><select id="status"><option ${data.status === 'Paid' ? 'selected' : ''}>Paid</option><option ${data.status === 'Pending' ? 'selected' : ''}>Pending</option></select></div>`,
+        notice: `<div class="form-group"><label>Title</label><input type="text" id="name" value="${data.name}"></div><div class="form-group"><label>Description</label><input type="text" id="subject" value="${data.subject}"></div>`
+      };
+      
+      document.getElementById('modal-body').innerHTML = forms[type] || '';
+      document.getElementById('modal').classList.add('active');
+    }
+
+    async function saveRecord() {
+      const fields = {};
+      document.querySelectorAll('#modal-body input, #modal-body select').forEach(el => {
+        fields[el.id] = el.value;
+      });
+      
+      if (!fields.name || (currentEditingType !== 'notice' && !fields.status)) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      const record = { type: currentEditingType, ...fields };
+      
+      if (currentEditingId) {
+        const existing = { __backendId: currentEditingId, ...record };
+        const result = await window.dataSdk.update(existing);
+        if (result.isError) alert('Error updating record');
+      } else {
+        const result = await window.dataSdk.create(record);
+        if (result.isError) alert('Error creating record');
+      }
+      
+      closeModal();
+    }
+
+    function confirmDelete(type, id) {
+      if (confirm('Are you sure you want to delete this ' + type + '?')) {
+        deleteRecord(type, id);
+      }
+    }
+
+    async function deleteRecord(type, id) {
+      let data = null;
+      if (type === 'teacher') data = allData.teachers.find(t => t.__backendId === id);
+      else if (type === 'student') data = allData.students.find(s => s.__backendId === id);
+      else if (type === 'parent') data = allData.parents.find(p => p.__backendId === id);
+      else if (type === 'class') data = allData.classes.find(c => c.__backendId === id);
+      else if (type === 'subject') data = allData.subjects.find(s => s.__backendId === id);
+      else if (type === 'fee') data = allData.fees.find(f => f.__backendId === id);
+      else if (type === 'notice') data = allData.notices.find(n => n.__backendId === id);
+      
+      if (!data) return;
+      
+      const result = await window.dataSdk.delete(data);
+      if (result.isError) alert('Error deleting record');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      currentEditingId = null;
+      currentEditingType = null;
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        alert('Logged out successfully');
+      }
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d671fa8b79b9e7a',t:'MTc3MjUyNDk5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

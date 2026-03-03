@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Principal Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    html { height: 100%; }
+    body { height: 100%; width: 100%; margin: 0; padding: 0; background: linear-gradient(135deg, #1E3A5F 0%, #16324F 50%, #0F2C4D 100%); color: #E6F1FA; overflow: hidden; }
+
+    .dashboard-container { display: flex; height: 100%; width: 100%; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #1B3B5A 0%, #122C44 100%);
+      color: #E6F1FA;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100%;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-header {
+      padding: 28px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+    }
+
+    .sidebar-logo { font-size: 36px; }
+    .sidebar-title { font-size: 18px; font-weight: 700; color: #FFFFFF; }
+
+    .sidebar-nav { padding: 20px 0; }
+    .nav-item {
+      padding: 14px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      color: #B4C5D8;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 4px 0;
+    }
+
+    .nav-item:hover { background: rgba(43, 176, 237, 0.15); color: #38C6F4; }
+    .nav-item.active { background: #2B5C88; color: #FFFFFF; border-left: 4px solid #2BB0ED; padding-left: 16px; }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 280px;
+      right: 0;
+      height: 75px;
+      background: #173653;
+      border-bottom: 2px solid rgba(43, 176, 237, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 35px;
+      z-index: 500;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-title { font-size: 22px; font-weight: 700; color: #FFFFFF; }
+    .header-right { display: flex; align-items: center; gap: 25px; }
+
+    .notification-bell {
+      font-size: 20px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease;
+      color: #E6F1FA;
+    }
+
+    .notification-bell:hover { transform: scale(1.1); }
+    .notification-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #FF4D4F;
+      border-radius: 50%;
+      top: -5px;
+      right: -5px;
+      box-shadow: 0 0 8px rgba(255, 77, 79, 0.5);
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(43, 176, 237, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(43, 176, 237, 0.3);
+      color: #E6F1FA;
+    }
+
+    .profile-section:hover { background: rgba(43, 176, 237, 0.2); }
+    .profile-avatar { 
+      width: 36px; 
+      height: 36px; 
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%); 
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      color: white; 
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(43, 176, 237, 0.3);
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%);
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(43, 176, 237, 0.2);
+    }
+
+    .logout-btn:hover { 
+      background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%); 
+      transform: translateY(-2px); 
+      box-shadow: 0 6px 20px rgba(43, 176, 237, 0.4); 
+    }
+
+    /* Main Content */
+    .main-wrapper { flex: 1; margin-left: 280px; margin-top: 75px; display: flex; flex-direction: column; height: calc(100% - 75px); }
+    .main-content { padding: 35px; overflow-y: auto; flex: 1; background: linear-gradient(135deg, #1E3A5F 0%, #16324F 50%, #0F2C4D 100%); }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      border-radius: 16px;
+      border-left: 4px solid #2BB0ED;
+      transition: all 0.3s ease;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .stat-card:hover { 
+      box-shadow: 0 16px 40px rgba(43, 176, 237, 0.15); 
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-label { 
+      color: #C9D8E5; 
+      font-size: 13px; 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value { 
+      color: #FFFFFF; 
+      font-size: 32px; 
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .stat-change { 
+      color: #22C55E; 
+      font-size: 12px; 
+      font-weight: 600;
+    }
+
+    .stat-change.down { color: #FF6B6B; }
+
+    /* Card Container */
+    .card-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      margin-bottom: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .card-container:hover {
+      box-shadow: 0 16px 40px rgba(43, 176, 237, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #1B3B5A 0%, #0F2C4D 100%);
+      padding: 24px;
+      border-bottom: 1px solid rgba(43, 176, 237, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .card-body {
+      padding: 24px;
+      color: #E6F1FA;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 20px;
+    }
+
+    /* Table Styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: rgba(43, 176, 237, 0.08);
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 700;
+      color: #C9D8E5;
+      font-size: 12px;
+      text-transform: uppercase;
+      border-bottom: 2px solid rgba(43, 176, 237, 0.15);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #E6F1FA;
+      font-size: 14px;
+    }
+
+    tr:hover { background: rgba(43, 176, 237, 0.08); }
+
+    /* Buttons */
+    .action-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      background: rgba(43, 176, 237, 0.15);
+      color: #2BB0ED;
+      border: 1px solid rgba(43, 176, 237, 0.3);
+    }
+
+    .action-btn:hover { 
+      background: #2BB0ED; 
+      color: white;
+      box-shadow: 0 4px 12px rgba(43, 176, 237, 0.3);
+    }
+
+    .action-btn.approve {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22C55E;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .action-btn.approve:hover {
+      background: #22C55E;
+      color: white;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .action-btn.reject {
+      background: rgba(255, 107, 107, 0.15);
+      color: #FF6B6B;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .action-btn.reject:hover {
+      background: #FF6B6B;
+      color: white;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    .add-btn {
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(43, 176, 237, 0.2);
+    }
+
+    .add-btn:hover {
+      background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(43, 176, 237, 0.4);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: rgba(27, 59, 90, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(43, 176, 237, 0.2);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 550px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header { 
+      font-size: 22px; 
+      font-weight: 700; 
+      margin-bottom: 24px; 
+      color: #FFFFFF;
+    }
+
+    .modal-body { margin-bottom: 24px; }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label { 
+      display: block; 
+      font-weight: 600; 
+      margin-bottom: 8px; 
+      color: #E6F1FA; 
+      font-size: 14px;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid rgba(43, 176, 237, 0.3);
+      border-radius: 8px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #E6F1FA;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(230, 241, 250, 0.4);
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2BB0ED;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(43, 176, 237, 0.15);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 100px; }
+
+    .modal-footer { 
+      display: flex; 
+      gap: 12px; 
+      justify-content: flex-end;
+    }
+
+    .modal-footer button { 
+      padding: 10px 22px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .cancel-btn { 
+      background: rgba(43, 176, 237, 0.15); 
+      color: #E6F1FA;
+      border: 1px solid rgba(43, 176, 237, 0.3);
+    }
+
+    .cancel-btn:hover { 
+      background: rgba(43, 176, 237, 0.25);
+    }
+
+    .save-btn { 
+      background: linear-gradient(135deg, #2BB0ED 0%, #1994D6 100%); 
+      color: white;
+      box-shadow: 0 4px 12px rgba(43, 176, 237, 0.2);
+    }
+
+    .save-btn:hover { 
+      background: linear-gradient(135deg, #38C6F4 0%, #2BB0ED 100%);
+      box-shadow: 0 6px 20px rgba(43, 176, 237, 0.4);
+    }
+
+    /* Status Badge */
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.pending { 
+      background: rgba(251, 146, 60, 0.2);
+      color: #FB923C;
+    }
+
+    .badge.approved {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22C55E;
+    }
+
+    .badge.rejected {
+      background: rgba(255, 107, 107, 0.2);
+      color: #FF6B6B;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #C9D8E5;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .view-content { display: none; }
+    .view-content.active { display: block; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 70px; }
+      .sidebar-title { display: none; }
+      .nav-item span { display: none; }
+      .header { left: 70px; }
+      .main-wrapper { margin-left: 70px; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body>
+  <div class="dashboard-container"><!-- Sidebar -->
+   <div class="sidebar">
+    <div class="sidebar-header" onclick="setCurrentView('overview')">
+     <div class="sidebar-logo">
+      👨‍💼
+     </div>
+     <div class="sidebar-title">
+      Principal
+     </div>
+    </div>
+    <div class="sidebar-nav">
+     <div class="nav-item active" onclick="setCurrentView('overview')"><span>📊</span> <span>Overview</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('performance')"><span>📈</span> <span>Performance</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('attendance')"><span>✓</span> <span>Attendance</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('leave-approval')"><span>🗓️</span> <span>Leave Requests</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('announcements')"><span>📢</span> <span>Announcements</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('fees')"><span>💰</span> <span>Fee Collection</span>
+     </div>
+     <div class="nav-item" onclick="setCurrentView('events')"><span>📅</span> <span>Events</span>
+     </div>
+    </div>
+   </div><!-- Main Content -->
+   <div class="main-wrapper"><!-- Header -->
+    <div class="header">
+     <div class="header-title" id="page-title">
+      📊 Overview
+     </div>
+     <div class="header-right">
+      <div class="notification-bell">
+       🔔 
+       <div class="notification-dot"></div>
+      </div>
+      <div class="profile-section">
+       <div class="profile-avatar" id="principal-initial">
+        D
+       </div>
+       <div id="principal-display">
+        Dr. Sarah
+       </div>
+      </div><button class="logout-btn" onclick="logout()">Logout</button>
+     </div>
+    </div><!-- Content Area -->
+    <div class="main-content"><!-- Overview View -->
+     <div id="overview-view" class="view-content active">
+      <div class="stats-grid">
+       <div class="stat-card">
+        <div class="stat-label">
+         Total Students
+        </div>
+        <div class="stat-value" id="total-students">
+         0
+        </div>
+        <div class="stat-change">
+         ↑ 5% from last month
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-label">
+         Total Teachers
+        </div>
+        <div class="stat-value" id="total-teachers">
+         0
+        </div>
+        <div class="stat-change">
+         ↑ 2 new teachers
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-label">
+         Avg Attendance
+        </div>
+        <div class="stat-value" id="avg-attendance">
+         0%
+        </div>
+        <div class="stat-change down">
+         ↓ 3% from last week
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-label">
+         Fees Collected
+        </div>
+        <div class="stat-value" id="fees-collected">
+         ₹0
+        </div>
+        <div class="stat-change">
+         ↑ 12% collection rate
+        </div>
+       </div>
+      </div>
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         📊 School Performance Overview
+        </div>
+       </div>
+       <div class="card-body">
+        <div class="chart-container">
+         <canvas id="performanceChart"></canvas>
+        </div>
+       </div>
+      </div>
+     </div><!-- Performance View -->
+     <div id="performance-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         👨‍🏫 Teacher Performance Reports
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Teacher Name</th>
+           <th>Subject</th>
+           <th>Class Avg Score</th>
+           <th>Attendance Rate</th>
+           <th>Rating</th>
+          </tr>
+         </thead>
+         <tbody id="teacher-performance-table">
+          <tr>
+           <td colspan="5" style="text-align: center; padding: 40px; color: #9CA3AF;">No data available</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         📚 Student Academic Performance
+        </div>
+       </div>
+       <div class="card-body">
+        <div class="chart-container">
+         <canvas id="academicChart"></canvas>
+        </div>
+        <table style="margin-top: 20px;">
+         <thead>
+          <tr>
+           <th>Class</th>
+           <th>Avg Marks</th>
+           <th>Pass %</th>
+           <th>Status</th>
+          </tr>
+         </thead>
+         <tbody id="academic-performance-table">
+          <tr>
+           <td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No data available</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Attendance Analytics -->
+     <div id="attendance-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         📊 Attendance Analytics
+        </div>
+       </div>
+       <div class="card-body">
+        <div class="chart-container">
+         <canvas id="attendanceChart"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         Class Attendance Summary
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Class</th>
+           <th>Present</th>
+           <th>Absent</th>
+           <th>Attendance %</th>
+          </tr>
+         </thead>
+         <tbody id="attendance-summary-table">
+          <tr>
+           <td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No data available</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Leave Approval -->
+     <div id="leave-approval-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         🗓️ Leave Requests - Pending
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Name</th>
+           <th>Type</th>
+           <th>Leave Date</th>
+           <th>Reason</th>
+           <th>Status</th>
+           <th>Action</th>
+          </tr>
+         </thead>
+         <tbody id="pending-leave-table">
+          <tr>
+           <td colspan="6" style="text-align: center; padding: 40px; color: #9CA3AF;">No pending requests</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         ✅ Leave Requests - History
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Name</th>
+           <th>Type</th>
+           <th>Leave Date</th>
+           <th>Status</th>
+          </tr>
+         </thead>
+         <tbody id="history-leave-table">
+          <tr>
+           <td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No requests in history</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Announcements -->
+     <div id="announcements-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+         <div class="card-title">
+          📢 School Announcements
+         </div><button class="add-btn" onclick="openAnnouncementModal()">+ New Announcement</button>
+        </div>
+       </div>
+       <div class="card-body" id="announcements-list" style="max-height: 600px; overflow-y: auto;">
+        <div class="empty-state">
+         <div class="empty-state-icon">
+          📌
+         </div>
+         <p>No announcements published</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Fee Collection -->
+     <div id="fees-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         💰 Fee Collection Summary
+        </div>
+       </div>
+       <div class="card-body">
+        <div class="chart-container">
+         <canvas id="feeChart"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="card-container">
+       <div class="card-header">
+        <div class="card-title">
+         Fee Status by Class
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Class</th>
+           <th>Total Amount</th>
+           <th>Collected</th>
+           <th>Pending</th>
+           <th>Collection %</th>
+          </tr>
+         </thead>
+         <tbody id="fee-summary-table">
+          <tr>
+           <td colspan="5" style="text-align: center; padding: 40px; color: #9CA3AF;">No data available</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Events Calendar -->
+     <div id="events-view" class="view-content">
+      <div class="card-container">
+       <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+         <div class="card-title">
+          📅 School Event Calendar
+         </div><button class="add-btn" onclick="openEventModal()">+ Add Event</button>
+        </div>
+       </div>
+       <div class="card-body">
+        <table>
+         <thead>
+          <tr>
+           <th>Event Title</th>
+           <th>Date</th>
+           <th>Description</th>
+           <th>Action</th>
+          </tr>
+         </thead>
+         <tbody id="events-table">
+          <tr>
+           <td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No events scheduled</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Modal for Forms -->
+  <div id="modal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header" id="modal-title">
+     Add Record
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer"><button class="cancel-btn" onclick="closeModal()">Cancel</button> <button class="save-btn" onclick="saveModalRecord()" id="save-btn">Save</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      school_name: 'Aurora Academy',
+      principal_name: 'Dr. Sarah Principal',
+      total_students: '500',
+      total_teachers: '50'
+    };
+
+    let config = { ...defaultConfig };
+    let currentView = 'overview';
+    let currentModalType = null;
+    let charts = {};
+    let allData = {
+      teachers: [],
+      students: [],
+      leaves: [],
+      announcements: [],
+      fees: [],
+      events: [],
+      attendance: []
+    };
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = newConfig;
+          document.getElementById('principal-display').textContent = config.principal_name || defaultConfig.principal_name;
+          document.getElementById('principal-initial').textContent = (config.principal_name || defaultConfig.principal_name).charAt(0);
+          updateStats();
+        },
+        mapToCapabilities: () => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+        mapToEditPanelValues: () => new Map([
+          ['school_name', config.school_name || defaultConfig.school_name],
+          ['principal_name', config.principal_name || defaultConfig.principal_name],
+          ['total_students', config.total_students || defaultConfig.total_students],
+          ['total_teachers', config.total_teachers || defaultConfig.total_teachers]
+        ])
+      });
+    }
+
+    // Initialize Data SDK
+    let dataInitialized = false;
+    async function initializeDataSdk() {
+      if (dataInitialized || !window.dataSdk) return;
+      const result = await window.dataSdk.init({
+        onDataChanged: (data) => {
+          data.forEach(record => {
+            const type = record.type;
+            if (type === 'teacher') {
+              const idx = allData.teachers.findIndex(t => t.__backendId === record.__backendId);
+              if (idx >= 0) allData.teachers[idx] = record;
+              else allData.teachers.push(record);
+            } else if (type === 'student') {
+              const idx = allData.students.findIndex(s => s.__backendId === record.__backendId);
+              if (idx >= 0) allData.students[idx] = record;
+              else allData.students.push(record);
+            } else if (type === 'leave') {
+              const idx = allData.leaves.findIndex(l => l.__backendId === record.__backendId);
+              if (idx >= 0) allData.leaves[idx] = record;
+              else allData.leaves.push(record);
+            } else if (type === 'announcement') {
+              const idx = allData.announcements.findIndex(a => a.__backendId === record.__backendId);
+              if (idx >= 0) allData.announcements[idx] = record;
+              else allData.announcements.push(record);
+            } else if (type === 'fee') {
+              const idx = allData.fees.findIndex(f => f.__backendId === record.__backendId);
+              if (idx >= 0) allData.fees[idx] = record;
+              else allData.fees.push(record);
+            } else if (type === 'event') {
+              const idx = allData.events.findIndex(e => e.__backendId === record.__backendId);
+              if (idx >= 0) allData.events[idx] = record;
+              else allData.events.push(record);
+            }
+          });
+          updateAllDisplays();
+        }
+      });
+      if (result.isOk) dataInitialized = true;
+    }
+
+    initializeDataSdk();
+
+    function updateStats() {
+      document.getElementById('total-students').textContent = config.total_students || '0';
+      document.getElementById('total-teachers').textContent = config.total_teachers || '0';
+      document.getElementById('avg-attendance').textContent = '92%';
+      document.getElementById('fees-collected').textContent = '₹' + (parseInt(config.total_students || 0) * 5000).toLocaleString();
+    }
+
+    function updateAllDisplays() {
+      updateStats();
+      updateTeacherPerformance();
+      updateAcademicPerformance();
+      updateLeaveTable();
+      updateAnnouncementsList();
+      updateFeeTable();
+      updateEventsTable();
+      initCharts();
+    }
+
+    function updateTeacherPerformance() {
+      const tbody = document.getElementById('teacher-performance-table');
+      if (allData.teachers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #9CA3AF;">No teacher data</td></tr>';
+        return;
+      }
+
+      const rows = allData.teachers.map(teacher => `
+        <tr>
+          <td>${teacher.teacherName || 'N/A'}</td>
+          <td>${teacher.subject || 'N/A'}</td>
+          <td>82/100</td>
+          <td>95%</td>
+          <td>⭐⭐⭐⭐⭐</td>
+        </tr>
+      `).join('');
+      tbody.innerHTML = rows;
+    }
+
+    function updateAcademicPerformance() {
+      const tbody = document.getElementById('academic-performance-table');
+      if (allData.students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No student data</td></tr>';
+        return;
+      }
+
+      const classData = {};
+      allData.students.forEach(student => {
+        const cls = student.className || 'General';
+        if (!classData[cls]) classData[cls] = { count: 0, marks: 0 };
+        classData[cls].count++;
+        classData[cls].marks += 75;
+      });
+
+      const rows = Object.entries(classData).map(([cls, data]) => {
+        const avg = Math.round(data.marks / data.count);
+        return `
+          <tr>
+            <td>${cls}</td>
+            <td>${avg}/100</td>
+            <td>87%</td>
+            <td><span class="badge approved">Good</span></td>
+          </tr>
+        `;
+      }).join('');
+      tbody.innerHTML = rows;
+    }
+
+    function updateLeaveTable() {
+      const pendingBody = document.getElementById('pending-leave-table');
+      const historyBody = document.getElementById('history-leave-table');
+      
+      const pending = allData.leaves.filter(l => l.leaveStatus === 'Pending');
+      const history = allData.leaves.filter(l => l.leaveStatus !== 'Pending');
+
+      if (pending.length === 0) {
+        pendingBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #9CA3AF;">No pending requests</td></tr>';
+      } else {
+        const rows = pending.map(leave => `
+          <tr>
+            <td>${leave.teacherName || leave.studentName || 'N/A'}</td>
+            <td>${leave.leaveType || 'General'}</td>
+            <td>${leave.leaveDate}</td>
+            <td>${leave.leaveReason}</td>
+            <td><span class="badge pending">Pending</span></td>
+            <td>
+              <button class="action-btn approve" onclick="approveLeave('${leave.__backendId}')">✓ Approve</button>
+              <button class="action-btn reject" onclick="rejectLeave('${leave.__backendId}')" style="margin-left: 4px;">✕ Reject</button>
+            </td>
+          </tr>
+        `).join('');
+        pendingBody.innerHTML = rows;
+      }
+
+      if (history.length === 0) {
+        historyBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No history</td></tr>';
+      } else {
+        const rows = history.map(leave => `
+          <tr>
+            <td>${leave.teacherName || leave.studentName || 'N/A'}</td>
+            <td>${leave.leaveType || 'General'}</td>
+            <td>${leave.leaveDate}</td>
+            <td><span class="badge ${leave.leaveStatus === 'Approved' ? 'approved' : 'rejected'}">${leave.leaveStatus}</span></td>
+          </tr>
+        `).join('');
+        historyBody.innerHTML = rows;
+      }
+    }
+
+    async function approveLeave(id) {
+      const leave = allData.leaves.find(l => l.__backendId === id);
+      if (!leave) return;
+      
+      const result = await window.dataSdk.update({
+        ...leave,
+        leaveStatus: 'Approved'
+      });
+    }
+
+    async function rejectLeave(id) {
+      const leave = allData.leaves.find(l => l.__backendId === id);
+      if (!leave) return;
+      
+      const result = await window.dataSdk.update({
+        ...leave,
+        leaveStatus: 'Rejected'
+      });
+    }
+
+    function updateAnnouncementsList() {
+      const container = document.getElementById('announcements-list');
+      if (allData.announcements.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📌</div><p>No announcements published</p></div>';
+        return;
+      }
+
+      container.innerHTML = allData.announcements.map(ann => `
+        <div style="padding: 18px; background: #F3F4F6; border-left: 4px solid #2BB0ED; margin-bottom: 12px; border-radius: 8px;">
+          <div style="font-weight: 700; color: #1F2937; font-size: 15px;">${ann.announcementTitle}</div>
+          <div style="font-size: 14px; color: #4B5563; margin-top: 8px;">${ann.announcementContent}</div>
+          <button class="action-btn" onclick="deleteRecord('announcement', '${ann.__backendId}')" style="margin-top: 10px;">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function updateFeeTable() {
+      const tbody = document.getElementById('fee-summary-table');
+      if (allData.fees.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #9CA3AF;">No fee data</td></tr>';
+        return;
+      }
+
+      const classFees = {};
+      allData.fees.forEach(fee => {
+        const cls = fee.className || 'General';
+        if (!classFees[cls]) classFees[cls] = { total: 0, collected: 0 };
+        const amount = parseInt(fee.feeAmount) || 0;
+        classFees[cls].total += amount;
+        if (fee.feeStatus === 'Paid') classFees[cls].collected += amount;
+      });
+
+      const rows = Object.entries(classFees).map(([cls, data]) => {
+        const pending = data.total - data.collected;
+        const percent = data.total > 0 ? Math.round((data.collected / data.total) * 100) : 0;
+        return `
+          <tr>
+            <td>${cls}</td>
+            <td>₹${data.total.toLocaleString()}</td>
+            <td>₹${data.collected.toLocaleString()}</td>
+            <td>₹${pending.toLocaleString()}</td>
+            <td>${percent}%</td>
+          </tr>
+        `;
+      }).join('');
+      tbody.innerHTML = rows;
+    }
+
+    function updateEventsTable() {
+      const tbody = document.getElementById('events-table');
+      if (allData.events.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #9CA3AF;">No events scheduled</td></tr>';
+        return;
+      }
+
+      const rows = allData.events.map(event => `
+        <tr>
+          <td>${event.eventTitle}</td>
+          <td>${event.eventDate}</td>
+          <td>${event.eventDescription}</td>
+          <td><button class="action-btn" onclick="deleteRecord('event', '${event.__backendId}')">Delete</button></td>
+        </tr>
+      `).join('');
+      tbody.innerHTML = rows;
+    }
+
+    function initCharts() {
+      // Performance Chart
+      if (document.getElementById('performanceChart')) {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        if (charts.performance) charts.performance.destroy();
+        charts.performance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              label: 'Student Performance',
+              data: [75, 78, 82, 80, 85, 87],
+              borderColor: '#2BB0ED',
+              backgroundColor: 'rgba(43, 176, 237, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+        });
+      }
+
+      // Academic Chart
+      if (document.getElementById('academicChart')) {
+        const ctx = document.getElementById('academicChart').getContext('2d');
+        if (charts.academic) charts.academic.destroy();
+        charts.academic = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Class 9', 'Class 10', 'Class 11', 'Class 12'],
+            datasets: [{
+              label: 'Average Marks',
+              data: [82, 85, 78, 88],
+              backgroundColor: '#2BB0ED'
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+        });
+      }
+
+      // Attendance Chart
+      if (document.getElementById('attendanceChart')) {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        if (charts.attendance) charts.attendance.destroy();
+        charts.attendance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+              data: [92, 8],
+              backgroundColor: ['#22C55E', '#EF4444']
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+
+      // Fee Chart
+      if (document.getElementById('feeChart')) {
+        const ctx = document.getElementById('feeChart').getContext('2d');
+        if (charts.fee) charts.fee.destroy();
+        charts.fee = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Class 9', 'Class 10', 'Class 11', 'Class 12'],
+            datasets: [{
+              label: 'Collected',
+              data: [450000, 480000, 420000, 500000],
+              backgroundColor: '#22C55E'
+            }, {
+              label: 'Pending',
+              data: [50000, 20000, 80000, 30000],
+              backgroundColor: '#EF4444'
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, scales: { stacked: true } }
+        });
+      }
+    }
+
+    function openAnnouncementModal() {
+      currentModalType = 'announcement';
+      document.getElementById('modal-title').textContent = 'Publish Announcement';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="form-group">
+          <label>Announcement Title</label>
+          <input type="text" id="announcement-title" placeholder="Enter title">
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea id="announcement-content" placeholder="Enter announcement content"></textarea>
+        </div>
+      `;
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function openEventModal() {
+      currentModalType = 'event';
+      document.getElementById('modal-title').textContent = 'Add Event';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="form-group">
+          <label>Event Title</label>
+          <input type="text" id="event-title" placeholder="Enter event title">
+        </div>
+        <div class="form-group">
+          <label>Event Date</label>
+          <input type="date" id="event-date">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="event-description" placeholder="Enter event description"></textarea>
+        </div>
+      `;
+      document.getElementById('modal').classList.add('active');
+    }
+
+    async function saveModalRecord() {
+      if (currentModalType === 'announcement') {
+        const title = document.getElementById('announcement-title').value;
+        const content = document.getElementById('announcement-content').value;
+        
+        if (!title || !content) {
+          alert('Please fill all fields');
+          return;
+        }
+
+        const result = await window.dataSdk.create({
+          type: 'announcement',
+          announcementTitle: title,
+          announcementContent: content,
+          principalId: config.principal_name,
+          status: 'Published'
+        });
+      } else if (currentModalType === 'event') {
+        const title = document.getElementById('event-title').value;
+        const date = document.getElementById('event-date').value;
+        const desc = document.getElementById('event-description').value;
+        
+        if (!title || !date) {
+          alert('Please fill all fields');
+          return;
+        }
+
+        const result = await window.dataSdk.create({
+          type: 'event',
+          eventTitle: title,
+          eventDate: date,
+          eventDescription: desc,
+          principalId: config.principal_name
+        });
+      }
+
+      closeModal();
+    }
+
+    async function deleteRecord(type, id) {
+      let data = null;
+      if (type === 'announcement') data = allData.announcements.find(a => a.__backendId === id);
+      else if (type === 'event') data = allData.events.find(e => e.__backendId === id);
+
+      if (!data) return;
+
+      const result = await window.dataSdk.delete(data);
+      if (result.isError) alert('Error deleting record');
+    }
+
+    function setCurrentView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(view + '-view').classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.target.closest('.nav-item').classList.add('active');
+
+      const titles = {
+        overview: '📊 Overview',
+        performance: '📈 Performance Analytics',
+        attendance: '📊 Attendance Analytics',
+        'leave-approval': '🗓️ Leave Approvals',
+        announcements: '📢 Announcements',
+        fees: '💰 Fee Collection',
+        events: '📅 Events'
+      };
+      document.getElementById('page-title').textContent = titles[view] || view;
+      
+      setTimeout(() => initCharts(), 100);
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      currentModalType = null;
+    }
+
+    function logout() {
+      const confirmLogout = document.createElement('div');
+      confirmLogout.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 3000;';
+      confirmLogout.innerHTML = `
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #1F2937;">Confirm Logout</div>
+        <div style="margin-bottom: 20px; color: #4B5563;">Are you sure you want to logout?</div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button style="padding: 8px 16px; background: #E5E7EB; border: none; border-radius: 6px; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">Cancel</button>
+          <button style="padding: 8px 16px; background: #EF4444; color: white; border: none; border-radius: 6px; cursor: pointer;" onclick="alert('Logged out'); this.parentElement.parentElement.remove()">Logout</button>
+        </div>
+      `;
+      document.body.appendChild(confirmLogout);
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d672eb290fa9e7a',t:'MTc3MjUyNTYxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
